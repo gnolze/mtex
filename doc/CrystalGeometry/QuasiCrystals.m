@@ -1,13 +1,13 @@
 %% Quasi symmetry
 %
 
-% Aufstellung 1
-% mit fünfzähliger Achse parallel zu z
+% setting 1
+% 5-fold rotation axis parallel to z
 %rot5 = rotation.byAxisAngle(zvector,(0:4)*72*degree)
 %rot3 = rotation.byAxisAngle(vector3d('polar',37.377*degree,0) ,(0:2)*120*degree)
 
-% Aufstellung 2
-% mit zweizähliger Achse parallel zu z
+% setting 2
+% 2-fold rotation axis parallel to z
 rot5 = rotation.byAxisAngle(vector3d('polar',31.7171*degree,0),(0:4)*72*degree)
 rot3 = rotation.byAxisAngle(vector3d('polar',20.9054*degree,90*degree),(0:2)*120*degree)
 
