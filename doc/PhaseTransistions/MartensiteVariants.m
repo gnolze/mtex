@@ -60,7 +60,7 @@ fit = std(ebsd('Aus').orientations) ./ degree
 
 %%
 % Next we display the bcc orientations (blue dots) in pole figures, and additionally we plot on
-% top of them the parent taenite orientation (red dots).
+% top of them the parent fcc orientation (red dots).
 
 childOri = grains('Fe').meanOrientation;
 
@@ -87,35 +87,45 @@ drawNow(gcm)
 
 %%
 % The partial coincidence of bcc and fcc poles suggests 
-% an existing of a crystallographic orientation relationship between both phases. 
-% The Kurdjumov-Sachs (KS) orientation relationship model assumes 
+% an existing crystallographic orientation relationship between both phases. 
+% For this technically relevant phase transformation several models have been developed 
+% in order to realize what might happen on an atomic scale. One of the first 
+% assumption was the Kurdjumov-Sachs (KS) orientation relationship model. It hypothesizes 
 % a transition of one of the {111}-fcc into one of the {110}-bcc 
-% planes. Moreover, within these planes one of the <110> directions 
+% planes since these are the closed-packed planes and the atomic arrangement is very similar. 
+% Moreover, within these planes one of the <110> directions 
 % of fcc is assumed to remain parallel to one of the <111> directions
-% of the formed bcc. Since for cubic crystals identically indexed (hkl) and [uvw]
-% generate the same directions, the derived pole figures can be used for both, the 
-% evaluation of directions as well as lattice plane normals.
+% of the formed bcc. 
+% Fortunately, for cubic crystals identically indexed (hkl) and [uvw]
+% generate the same directions. Therefore, the pole figures for lattice planes look identical
+% to those of equally indexed lattice directions, so that the same pole figure can be used 
+% for the evaluation of lattice directions as well as planes.
 %
-% Although we could alternatively use the MTEX command 
-% |orientation.KurdjumovSachs(cs_aus,cs_bcc)|, let us define the orientation
-% relationship explicitely:
+% Although we could alternatively apply the MTEX command 
+% |orientation.KurdjumovSachs(cs_aus,cs_bcc)|, let us define the upper mentioned orientation
+% relationship manually:
 
 KS = orientation.map(Miller(1,1,1,cs_aus),Miller(0,1,1,cs_bcc),...
       Miller(-1,0,1,cs_aus),Miller(-1,-1,1,cs_bcc));
 
+% Please note the condition of perpendicular vectors for both phases: hu+kv+lw=0, i.e., the indices need to
+% be correctly defined.
 
 plotPDF(variants(KS,parenOri),'add2all','MarkerFaceColor','none','MarkerEdgeColor','k','linewidth',2)
 
 %%
-% In order to quantify the match between the Kurdjumov-Sachs model
-% and the actual orientation relationship in the specific plessitic area, we can
-% compute as simplest indicator the mean angular deviation between all parent-to-child
-% misorientaitons and the KS model
+% As common for models, they never match exactly the experiment. Whereas often 
+% statistical reasons prevent a better match, the orientation relationship very likely depends on the 
+% chemical composition at the interface. So it is no miracle that KS does not perfectly fit to the experimental
+% data.
+% For a quantification of the deviation between the model and the discovered conditions in plessite, 
+% as simplest indicator we can first compute the mean angular deviation between all parent-to-child
+% misorientaitons and the KS model.
 
 % Each parent-to-child misorientations can be calculated by
 mori = inv(childOri) * parenOri;
 
-% whereas the mean angular deviation (output in degree) can be computed by the command
+% whereas the mean angular deviation (output in degree) results from
 mean(angle(mori, KS)) ./ degree
 
 %fit = sqrt(mean(min(angle_outer(childOri,variants(KS,parenOri)),[],2).^2))./degree
@@ -123,8 +133,8 @@ mean(angle(mori, KS)) ./ degree
 
 %% Estimating the parent to child orientation relationship
 %
-% We may have asked ourselfs whether there is an orientation relationship
-% that better matches the measured misorientations than proposed by the KS model. 
+% Since KS shows a certain deviation, we may have asked ourselfs whether there is an orientation relationship
+% that better matches the measured data. 
 % A canocial candidate would be the <orientation.mean.html |mean|> of all
 % misorientations.
 
@@ -140,41 +150,47 @@ hold off
 mean(angle(mori, p2cMean)) ./ degree
 
 %%
-% Here we have made use of our comfortable situation to know the parent
-% orientation. If the parent orientation is unknown we may still estimate
-% the parent to child orientation relationship soleley from the child to
-% child misorientations by the algorithm by Tuomo Nyyssönen and implemented
-% in the function <calcParent2Child.html |calcParent2Child|>. This
-% iterative algorithms needs as a starting point some orientation relation
-% ship no too far from the actual one. Here we use the Nishiyama Wassermann
-% orientation relation ship. 
+% Here we have made use of our comfortable situation to know the parent orientation. 
+% However, if this reference orientation is unknown we may still estimate
+% the parent-to-child orientation relationship soleley from the child-to-child 
+% misorientations by an algorithm derived from Tuomo Nyyssönen and available in MTEX
+% by the function <calcParent2Child.html |calcParent2Child|>. This
+% iterative algorithm needs as starting point an orientation relationship
+% close to the actual one. Instead of KS, we can use the Nishiyama-Wassermann (NW)
+% orientation relationship which also uses the closed-packed planes but not the close-packed
+% directions. Instead, a symmetrical alignement is preferred which assumes one of three <110> 
+% in fcc parallel to the <001> in bcc. This reduces the amount of possibilities (variants) per 
+% lattice plane to three compared to six for KS. Multiplied by the number of symmetric {111} planes
+% for KS result 24 variants, whereas for NW only 12 are possible. Despite the different crystallographic 
+% indexing, the misorientation angle between both models is below 6 degrees.
 
-% define Nishiyama Wassermann
+
+% MTEX already contains a definition of NW which can be simply called:
 NW = orientation.NishiyamaWassermann(cs_aus,cs_bcc);
 
-% extract all child to child misorientations 
+% With the following command  all child-to-child misorientations will be extracted: 
 grainPairs = neighbors(grains('Fe'));
 ori = grains(grainPairs).meanOrientation;
 
-% estimate a parent to child orientation relationship
+% The estimation of the parent-to-child orientation relationship results from
 p2cIter = calcParent2Child(ori,NW)
 
-% the mean angular deviation
+% and the mean angular deviation is
 mean(angle(mori,p2cIter)) ./degree
 
 %%
-% We observe that the parent to child orientation relationship computed
-% solely from the child to child misorientations fits the actual
-% orientation relationship equaly well. 
+% The parent-to-child orientation relationship solely computed
+% from the child-to-child misorientations actually fits the experimental
+% orientation relationship quite well. 
 %
-%% Classification of child variants
+%% Classification of variants
 %
-% Once we have determined parent orientations and a parent to child
-% orientation relationship we may proceed further by classifying the child
-% orientations into different variants. This is computed by the command
+% Once we have determined parent orientations and an 
+% orientation relationship we may proceed further by classifying the 
+% different variants. This is computed by the command
 % <calcChildVariant.html |calcChildVariant|>.
 
-% compute for each child orientation a variantId
+% determine for each child orientation a variantId
 [variantId, packetId] = calcChildVariant(parenOri,childOri,p2cIter);
 
 % colorize the orientations according to the variantID
@@ -188,11 +204,17 @@ plotPDF(childOri,color,h_bcc,'MarkerSize',5);
 plot(childOri,color,'axisAngle')
 
 %%
-% A more important classification is the seperation of the
-% variants into packets. 
+% Another classification of variants is a grouping of them
+% according to one of the assumed transformation planes {111}. 
 
 color = ind2color(packetId);
 plotPDF(childOri,color,h_bcc,'MarkerSize',5,'points',1000);
+
+%%
+% Another classification of variants is a grouping of them
+% according to one of the assumed transformation planes {111}. 
+% For colors - red, blue, orange and green - are sufficient to generate  
+% a pole distribution wich represents each a group of variants (packet).
 
 nextAxis(1)
 hold on
@@ -212,12 +234,8 @@ hold off
 drawNow(gcm)
 
 %%
-% As we can see from the above pole figures the red, blue, orange and green
-% orientations are distinguished by which of the symmetrically equivalent
-% (111) austenite axes is aligned to the (110) martensite axis.
-%%
-% We may also use the packet color to distinguish different Martensite
-% packets in the EBSD map.
+% We may also use the packet colors to vizualize the spatial distribution 
+% of them in the EBSD map.
 
 plot(grains('Fe'),color)
 
